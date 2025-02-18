@@ -1,0 +1,33 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "src/assets/fonts/Lato-Black.ttf",
+      "sha1": "a001eb827743636e04f8efa7d4aeedf0541c46ac"
+    },
+    {
+      "path": "src/assets/fonts/Lato-Bold.ttf",
+      "sha1": "542498221d97bee5bdbccf86ee8890bf8e8005c9"
+    },
+    {
+      "path": "src/assets/fonts/Lato-Regular.ttf",
+      "sha1": "e923c72eda5e50a87e18ff5c71e9ef4b3b6455a3"
+    },
+    {
+      "path": "src/assets/fonts/NotoSansDevanagari-Bold.ttf",
+      "sha1": "42663c74310bd7ca6305113fb0954cff2841261f"
+    },
+    {
+      "path": "src/assets/fonts/NotoSansDevanagari-Medium.ttf",
+      "sha1": "793f0f03a49e302de2cfd90463cc6941f49cec1d"
+    },
+    {
+      "path": "src/assets/fonts/NotoSansDevanagari-Regular.ttf",
+      "sha1": "e0474da60f6bd43f693270be2dbab093b7c181e6"
+    },
+    {
+      "path": "src/assets/fonts/NotoSansDevanagari-SemiBold.ttf",
+      "sha1": "e5769cd2c3fd3c263f50c9fb000967ed2fbd7dec"
+    }
+  ]
+}
