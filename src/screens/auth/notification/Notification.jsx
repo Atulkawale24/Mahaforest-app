@@ -1,5 +1,5 @@
-import {View, Text, FlatList} from 'react-native';
-import React from 'react';
+import {View, Text, FlatList, TextInput} from 'react-native';
+import React, {useEffect, useState} from 'react';
 import {globalStyle} from '../../../styles/globalStyle';
 import TopHeader from '../../../common-components/TopHeader';
 import colors from '../../../constants/colors';
@@ -9,6 +9,7 @@ import NotificationCard from '../../../cards/NotificationCard';
 import images from '../../../constants/images';
 
 const Notification = ({navigation}) => {
+  
   const notificationDetail = {
     title: 'Global Summit on Climate Change: Historic Agreement Reached',
     description:
@@ -16,6 +17,7 @@ const Notification = ({navigation}) => {
     image: images.notificationImg,
     date: 'Jan 09, 2025',
   };
+
   return (
     <View style={globalStyle.pageWrapper}>
       <TopHeader

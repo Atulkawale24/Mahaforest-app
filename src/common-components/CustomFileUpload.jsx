@@ -4,6 +4,7 @@ import {Controller} from 'react-hook-form';
 import colors from '../constants/colors';
 import {customInputStyle} from './CustomInput';
 import {pick, types} from '@react-native-documents/picker';
+import Toast from 'react-native-toast-message';
 
 const CustomFileUpload = ({
   control,
@@ -14,11 +15,19 @@ const CustomFileUpload = ({
   note,
   setValue,
   fileName,
+  trigger,
 }) => {
   const selectFile = async () => {
     const result = await pick({
       type: [types.pdf],
     });
+    if (Number(result[0]?.size) > 20000000) {
+      Toast.show({
+        type: 'error',
+        text1: 'File size should be less than 20MB.',
+      });
+      return;
+    }
     if (result.length > 0) {
       const obj = {
         name: result[0]?.name,
@@ -27,6 +36,7 @@ const CustomFileUpload = ({
         fileName: name,
       };
       setValue(`${name}`, obj);
+      trigger(name);
     }
   };
 
@@ -45,6 +55,7 @@ const CustomFileUpload = ({
                   {color: editable ? colors.black : colors.grey},
                 ]}>
                 {label}
+                {rules && <Text style={{color: 'red'}}>*</Text>}
               </Text>
             )}
             <View
@@ -57,7 +68,10 @@ const CustomFileUpload = ({
               </Text>
               <Pressable
                 style={customInputStyle.chooseFileButton}
-                onPress={() => selectFile()}>
+                onPress={() => {
+                  selectFile();
+                  trigger(name);
+                }}>
                 <Text style={customInputStyle.chooseFileText}>Choose File</Text>
               </Pressable>
             </View>

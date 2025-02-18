@@ -1,4 +1,11 @@
-import {View, Text, StyleSheet, Pressable} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+  Dimensions,
+} from 'react-native';
 import React from 'react';
 import colors from '../constants/colors';
 import fontSize from '../constants/fontSize';
@@ -8,44 +15,70 @@ import {dateMonthYearConverter} from '../helper/dateMonthYearConverter';
 const TimeLineCard = ({stepsArray}) => {
   return (
     <View style={timelineStyle.timelineWrapper}>
-      <View style={timelineStyle.countWrapper}>
-        {/* <View style={timelineStyle.count}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={timelineStyle.scrollView}>
+        <View style={timelineStyle.countWrapper}>
+          {/* <View style={timelineStyle.count}>
           <Text style={timelineStyle.countText}>1</Text>
-        </View> */}
-        <Text style={timelineStyle.milestoneText}>Milestone</Text>
-      </View>
-      <Text style={timelineStyle.approvalText}>Application Approval</Text>
-      {stepsArray?.length > 0 && (
-        <>
-          {stepsArray?.map((ele, index) => {
-            const date = ele?.split(' ')?.pop();
-            return (
-              <View style={timelineStyle.trackingWrapper} key={index}>
-                <View style={timelineStyle.lineWrapper}>
-                  <View style={timelineStyle.outerRing}>
-                    <View style={timelineStyle.innerRing}></View>
+          </View> */}
+          <Text style={timelineStyle.milestoneText}>Milestone</Text>
+        </View>
+        <Text style={timelineStyle.approvalText}>Application Approval</Text>
+        {stepsArray?.length > 0 && (
+          <>
+            {stepsArray?.map((ele, index) => {
+              const date = ele?.split(' ')?.pop();
+              return (
+                <View style={timelineStyle.trackingWrapper} key={index}>
+                  <View style={timelineStyle.lineWrapper}>
+                    <View
+                      style={[
+                        timelineStyle.outerRing,
+                        {
+                          borderColor: ele?.toLowerCase()?.includes('grant')
+                            ? colors.green
+                            : ele?.toLowerCase()?.includes('issued')
+                            ? colors.blue
+                            : colors.grey,
+                        },
+                      ]}>
+                      <View
+                        style={[
+                          timelineStyle.innerRing,
+                          {
+                            backgroundColor: ele
+                              ?.toLowerCase()
+                              ?.includes('grant')
+                              ? colors.green
+                              : ele?.toLowerCase()?.includes('issued')
+                              ? colors.blue
+                              : colors.grey,
+                          },
+                        ]}></View>
+                    </View>
+                    {stepsArray?.length - 1 !== index && (
+                      <View style={timelineStyle.line}></View>
+                    )}
                   </View>
-                  {stepsArray?.length - 1 !== index && (
-                    <View style={timelineStyle.line}></View>
-                  )}
-                </View>
-                <View style={timelineStyle.trackCardWrapper} key={index}>
-                  <Text style={timelineStyle.stageText}>{`Approval ${
-                    index + 1
-                  }`}</Text>
-                  <Text style={timelineStyle.text}>{ele ?? '--'}</Text>
-                  {/* <Pressable style={timelineStyle.statusWrapper}>
+                  <View style={timelineStyle.trackCardWrapper} key={index}>
+                    <Text style={timelineStyle.stageText}>{`Approval ${
+                      index + 1
+                    }`}</Text>
+                    <Text style={timelineStyle.text}>{ele ?? '--'}</Text>
+                    {/* <Pressable style={timelineStyle.statusWrapper}>
                 <Text style={timelineStyle.statusText}>Approved</Text>
               </Pressable> */}
-                  <Text style={timelineStyle.date}>{`${dateMonthYearConverter(
-                    date,
-                  )}`}</Text>
+                    <Text style={timelineStyle.date}>{`${dateMonthYearConverter(
+                      date,
+                    )}`}</Text>
+                  </View>
                 </View>
-              </View>
-            );
-          })}
-        </>
-      )}
+              );
+            })}
+          </>
+        )}
+      </ScrollView>
     </View>
   );
 };
@@ -54,12 +87,20 @@ export default TimeLineCard;
 const timelineStyle = StyleSheet.create({
   timelineWrapper: {
     width: '100%',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
+    // height: Dimensions.get('window').height / 1.9,
+    // paddingVertical: 10,
+    // paddingHorizontal: 15,
     backgroundColor: colors.white,
-    elevation: 2,
+    // elevation: 2,
+    borderWidth: 1,
+    borderColor: 'lightgrey',
     borderRadius: 10,
     marginTop: 20,
+    marginBottom: 50,
+  },
+  scrollView: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
   },
   countWrapper: {
     flexDirection: 'row',
@@ -158,10 +199,11 @@ const timelineStyle = StyleSheet.create({
     backgroundColor: colors.blue,
   },
   text: {
-    width: '60%',
+    width: '45%',
     fontFamily: fontFamily.latoRegular,
     fontSize: fontSize.textFontSize,
     color: colors.grey,
     marginVertical: 8,
+    flexWrap: 'wrap',
   },
 });

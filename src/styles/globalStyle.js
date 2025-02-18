@@ -21,6 +21,7 @@ export const globalStyle = StyleSheet.create({
   },
   globalCardWrapper: {
     width: '93%',
+    // height: height / 1.75,
     marginHorizontal: 'auto',
     backgroundColor: colors.white,
     padding: 10,
@@ -51,7 +52,7 @@ export const globalStyle = StyleSheet.create({
     backgroundColor: colors.white,
   },
   globalCardTitle: {
-    fontSize: fontSize.textFontSize,
+    fontSize: fontSize.secondaryFontSize,
     fontFamily: fontFamily.latoRegular,
     color: colors.grey,
   },

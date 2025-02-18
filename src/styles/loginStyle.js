@@ -24,6 +24,7 @@ const loginStyle = StyleSheet.create({
     // zIndex: 55,
     height: height / 1.5,
     backgroundColor: colors.white,
+    flex: 2.5,
   },
   multiTextWrapper: {
     flexDirection: 'row',

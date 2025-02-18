@@ -4,27 +4,31 @@ import colors from '../../../constants/colors';
 import fontFamily from '../../../constants/fontFamily';
 import fontSize from '../../../constants/fontSize';
 
-const LogOutBox = ({onCancel, onLogout}) => {
+const LogOutBox = ({
+  onCancel,
+  onLogout,
+  title,
+  content,
+  cancelBtnText,
+  yesBtnText,
+}) => {
   return (
     <Modal transparent>
       <View style={modalStyle.modalWrapper}>
         <View style={modalStyle.logoutBox}>
-          <Text style={modalStyle.title}>Log Out?</Text>
-          <Text style={modalStyle.description}>
-            Are you sure you want to log out? You'll need to login again to use
-            the app.
-          </Text>
+          <Text style={modalStyle.title}>{title}</Text>
+          <Text style={modalStyle.description}>{content}</Text>
           <View style={modalStyle.buttonGroup}>
             <Pressable
               style={[modalStyle.button, modalStyle.cancelButton]}
               onPress={onCancel}>
               <Text
                 style={[modalStyle.buttonText, modalStyle.cancelButtonText]}>
-                Cancel
+                {cancelBtnText}
               </Text>
             </Pressable>
             <Pressable style={modalStyle.button} onPress={onLogout}>
-              <Text style={modalStyle.buttonText}>Log out</Text>
+              <Text style={modalStyle.buttonText}>{yesBtnText}</Text>
             </Pressable>
           </View>
         </View>

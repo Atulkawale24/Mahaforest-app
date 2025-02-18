@@ -8,6 +8,13 @@ export const lossOfLivestockArray = [
     type: 'अपंग (गाय, म्हैस/रेडा, बेल)',
   },
   {
+    id: 4,
+    type: 'जखमी (सर्व प्रजाती)',
+  },
+];
+
+export const lossOfLiveOtherStockArray = [
+  {
     id: 3,
     type: 'इतर मृत्यू (मेंढी, बकरी, इत्यादि)',
   },

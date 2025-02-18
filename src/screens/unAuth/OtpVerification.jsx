@@ -64,6 +64,12 @@ const OtpVerification = ({navigation, route}) => {
           type: 'success',
           text1: 'Login Successful',
         });
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Enter valid OTP',
+        });
+        return;
       }
     },
   });

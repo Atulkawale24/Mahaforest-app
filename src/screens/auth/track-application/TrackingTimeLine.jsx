@@ -22,7 +22,7 @@ const TrackingTimeLine = ({navigation, route}) => {
     <View style={globalStyle.pageWrapper}>
       <TopHeader
         primaryScreen="Track Application"
-        secondaryScreen="MFD1001"
+        // secondaryScreen={application?.APPLICATION_NO}
         onPress={() => navigation.goBack()}
         bgColor={colors.white}
       />

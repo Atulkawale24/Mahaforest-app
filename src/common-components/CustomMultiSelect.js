@@ -44,6 +44,7 @@ const CustomMultiSelect = ({
                 {color: disabled ? colors.grey : colors.black},
               ]}>
               {label}
+              {selectOptions && <Text style={{color: 'red'}}>*</Text>}
             </Text>
           )}
           <View style={[styles.dropdownClickableContainer]}>

@@ -41,24 +41,24 @@ const AuthScreenNavigator = () => {
       color: colors.blue,
       alphaClr: colors.blue,
     },
-    {
-      route: 'notification',
-      label: 'Notification',
-      //   type: 'Feather', // Must match a key in `Icons`
-      icon: images.notificationIcon,
-      component: NotificationNavigator,
-      color: colors.blue,
-      alphaClr: colors.blue,
-    },
-    {
-      route: 'profile',
-      label: 'Profile',
-      //   type: 'Feather', // Must match a key in `Icons`
-      icon: images.profileIcon,
-      component: Profile,
-      color: colors.blue,
-      alphaClr: colors.blue,
-    },
+    // {
+    //   route: 'notification',
+    //   label: 'Notification',
+    //   //   type: 'Feather', // Must match a key in `Icons`
+    //   icon: images.notificationIcon,
+    //   component: NotificationNavigator,
+    //   color: colors.blue,
+    //   alphaClr: colors.blue,
+    // },
+    // {
+    //   route: 'profile',
+    //   label: 'Profile',
+    //   //   type: 'Feather', // Must match a key in `Icons`
+    //   icon: images.profileIcon,
+    //   component: Profile,
+    //   color: colors.blue,
+    //   alphaClr: colors.blue,
+    // },
   ];
 
   const TabButton = props => {

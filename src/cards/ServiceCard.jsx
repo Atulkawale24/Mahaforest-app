@@ -45,7 +45,7 @@ const serviceCardWrapperStyle = StyleSheet.create({
     padding: 10,
     backgroundColor: colors.cardBg,
     borderRadius: 10,
-    elevation: 0.7,
+    // elevation: 0.7,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -69,12 +69,12 @@ const serviceCardWrapperStyle = StyleSheet.create({
     width: '75%',
   },
   engText: {
-    fontSize: fontSize.textFontSize,
+    fontSize: fontSize.buttonFontSize,
     fontFamily: fontFamily.latoRegular,
     color: colors.blue,
   },
   marathiText: {
-    fontSize: fontSize.labelFontSize,
+    fontSize: fontSize.textFontSize,
     fontFamily: fontFamily.latoRegular,
     color: colors.grey,
     marginTop: 5,

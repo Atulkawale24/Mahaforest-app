@@ -10,16 +10,17 @@ import {storage} from '../store/mmkvInstance';
 const Stack = createStackNavigator();
 
 const RootNavigator = () => {
-  const MOBILE_NO = storage.getNumber('MOBILE_NO');
+  // const REGISTER_ID = storage.getNumber('REGISTER_ID');
 
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={
-          [undefined, null, '']?.includes(MOBILE_NO)
-            ? 'unAuthScreens'
-            : 'authScreens'
-        }
+        // initialRouteName={
+        //   [undefined, null, '']?.includes(REGISTER_ID)
+        //     ? 'unAuthScreens'
+        //     : 'authScreens'
+        // }
+        initialRouteName={'unAuthScreens'}
         screenOptions={{headerShown: false}}>
         <Stack.Screen name="unAuthScreens" component={UnAuthScreenNavigator} />
         <Stack.Screen name="authScreens" component={AuthScreenNavigator} />

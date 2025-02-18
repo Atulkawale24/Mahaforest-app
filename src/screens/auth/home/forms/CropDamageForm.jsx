@@ -46,7 +46,7 @@ const CropDamageForm = ({navigation, route}) => {
   const [reloadCaptcha, setReloadCaptcha] = useState(false);
   const [districtId, setDistrictId] = useState(null);
   const [officeId, setOfficeId] = useState(null);
-  const {control, handleSubmit, setValue, watch} = useForm();
+  const {control, handleSubmit, setValue, watch, trigger, setError} = useForm();
   const [selectedAnimal, setSelectedAnimal] = useState([]);
   const [selectedFruit, setSelectedFruit] = useState([]);
   const [handleMultiSelectError, setHandleMultiSelectError] = useState({
@@ -72,15 +72,44 @@ const CropDamageForm = ({navigation, route}) => {
   const CMBDISTRICT = watch('CMBDISTRICT');
   const CMDROFFICE = watch('CMDROFFICE');
   const CMBVILLAGE = watch('CMBVILLAGE');
+  const VILLAGETXT = watch('VILLAGETXT');
+  const CROP_TYPE = watch('CROP_TYPE');
+
+  //clearing value as per crop type
+  useEffect(() => {
+    if (Number(CROP_TYPE?.id) === 1) {
+      setValue('CROP_NAME', '');
+      setSelectedAnimal([]);
+      setSelectedFruit([]);
+    } else if (Number(CROP_TYPE?.id) === 2) {
+      setSelectedAnimal([]);
+      setSelectedFruit([]);
+    } else {
+      setValue('CROP_NAME', '');
+    }
+  }, [CROP_TYPE]);
+
+  useEffect(() => {
+    if (CMBWING) {
+      setValue('CMBDISTRICT', '');
+      setValue('CMBTALUKA', '');
+      setValue('CMDROFFICE', '');
+      setValue('CMBVILLAGE', '');
+    }
+  }, [CMBWING]);
 
   useEffect(() => {
     if (CMBDISTRICT) {
+      setValue('CMBTALUKA', '');
+      setValue('CMDROFFICE', '');
+      setValue('CMBVILLAGE', '');
       setDistrictId(CMBDISTRICT?.DISTRICT_ID);
     }
   }, [CMBDISTRICT]);
 
   useEffect(() => {
     if (CMDROFFICE) {
+      setValue('CMBVILLAGE', '');
       setOfficeId(CMDROFFICE?.OF_ID);
     }
   }, [CMDROFFICE]);
@@ -169,7 +198,21 @@ const CropDamageForm = ({navigation, route}) => {
           text1: `${data?.RESULT_MESSAGE}`,
         });
         navigation.navigate('home');
+      } else if (Number(data?.RESULT_CODE) === 2) {
+        // const serverErrors = data.RESULT_DATA;
+        // // Loop through server errors and assign them to form fields
+        // Object.keys(serverErrors).forEach(field => {
+        //   setError(field, {
+        //     type: 'server',
+        //     message: serverErrors[field], // Display server validation message
+        //   });
+        // });
+        Toast.show({
+          type: 'error',
+          text1: `${data?.RESULT_MESSAGE}`,
+        });
       } else {
+        navigation.navigate('home');
         Toast.show({
           type: 'error',
           text1: `${data?.RESULT_MESSAGE}`,
@@ -179,17 +222,25 @@ const CropDamageForm = ({navigation, route}) => {
   });
   const submitForm = data => {
     try {
-      if (selectedAnimal?.length === 0) {
+      if (selectedAnimal?.length === 0 && Number(data?.CROP_TYPE?.id) === 3) {
         Toast.show({
           type: 'error',
           text1: 'Wild Animal is required',
         });
         return;
       }
-      if (selectedFruit?.length === 0) {
+      if (selectedFruit?.length === 0 && Number(data?.CROP_TYPE?.id) === 3) {
         Toast.show({
           type: 'error',
           text1: 'Fruit is required',
+        });
+        return;
+      }
+
+      if (!CMBVILLAGE?.VILLAGE_ID && !VILLAGETXT) {
+        Toast.show({
+          type: 'error',
+          text1: 'Village Name is required',
         });
         return;
       }
@@ -210,8 +261,11 @@ const CropDamageForm = ({navigation, route}) => {
         formData.append('APPLICANT_NAME', data?.APPLICANT_NAME); //marathi
         formData.append('MOBILE_NO', data?.MOBILE_NO);
         formData.append('AADHAAR_NO', data?.AADHAAR_NO);
-        formData.append('CROP_TYPE', data?.CROPTYPE?.id);
-        formData.append('CROP_NAME', data?.CROP_NAME);
+        formData.append('CROP_TYPE', data?.CROP_TYPE?.id);
+        //crop type is pic then this condition will run
+        if (Number(data?.CROP_TYPE?.id) === 2) {
+          formData.append('CROP_NAME', data?.CROP_NAME);
+        }
         formData.append('CROP_FARMER', data?.CROP_FARMER);
         formData.append('ADDRESS', data?.ADDRESS); //marathi
         formData.append('CMBWING', data?.CMBWING?.WING_ID);
@@ -227,21 +281,23 @@ const CropDamageForm = ({navigation, route}) => {
         formData.append('AADHAAR_COPY', AADHAAR_COPY);
         formData.append('NOC_COPY', NOC_COPY);
         formData.append('SATBARACOPY', SATBARACOPY);
-        if (selectedAnimal?.length > 0) {
-          selectedAnimal?.forEach((ele, ind) => {
-            formData.append('CMBWILDANIMAL ', ele?.id);
-          });
-        }
-        if (selectedFruit?.length > 0) {
-          selectedFruit?.forEach((ele, ind) => {
-            formData.append('CMBFRUITNAME ', ele?.id);
-          });
-        }
-        if (data?.CMBVILLAGE?.VILLAGE_ID) {
-          formData.append('CMBVILLAGE', data?.CMBVILLAGE?.VILLAGE_ID);
+        //crop type is falzad then this condition will run
+        if (Number(data?.CROP_TYPE?.id) === 3) {
+          if (selectedAnimal?.length > 0) {
+            selectedAnimal?.forEach((ele, ind) => {
+              formData.append('CMBWILDANIMAL', ele?.id);
+            });
+          }
+          if (selectedFruit?.length > 0) {
+            selectedFruit?.forEach((ele, ind) => {
+              formData.append('CMBFRUITNAME', ele?.id);
+            });
+          }
         }
         if (data?.VILLAGETXT) {
           formData.append('VILLAGETXT', data?.VILLAGETXT);
+        } else {
+          formData.append('CMBVILLAGE', data?.CMBVILLAGE?.VILLAGE_ID);
         }
       }
       mutate(formData);
@@ -264,7 +320,7 @@ const CropDamageForm = ({navigation, route}) => {
         />
         <View style={[globalStyle.screenWrapper, {flex: 0.97}]}>
           <FormCard serviceType={serviceType} />
-          <View style={formStyle.languageChangerWrapper}>
+          {/* <View style={formStyle.languageChangerWrapper}>
             <Text style={formStyle.languageText}>
               मराठी मध्ये लिहीण्याकरीता (अ) यावर क्लिक करा
             </Text>
@@ -277,7 +333,7 @@ const CropDamageForm = ({navigation, route}) => {
                 अ?
               </Text>
             </Pressable>
-          </View>
+          </View> */}
           <ScrollView showsVerticalScrollIndicator={false}>
             <View
               style={[
@@ -302,21 +358,20 @@ const CropDamageForm = ({navigation, route}) => {
               </View>
               <CustomEngToMarathiInput
                 control={control}
+                trigger={trigger}
                 name="APPLICANT_NAME"
                 setValue={setValue}
                 rules={{
                   required: 'Applicant Name is required',
                 }}
                 placeholder="अर्जदाराचे पूर्ण नाव"
-                label="Applicant Full Name (अर्जदाराचे पूर्ण नाव)*"
-                fontFamily={
-                  isMarathiLanguage
-                    ? fontFamily.devanagariRegular
-                    : fontFamily.latoRegular
-                }
+                label="Applicant Full Name"
+                maxLength={100}
+                fontFamily={fontFamily.devanagariRegular}
               />
               <CustomInput
                 control={control}
+                trigger={trigger}
                 name="MOBILE_NO"
                 keyboardType="numeric"
                 rules={{
@@ -329,9 +384,14 @@ const CropDamageForm = ({navigation, route}) => {
                     value: 10,
                     message: 'Mobile Number must be 10 digit',
                   },
+                  pattern: {
+                    value: /^[6789]\d{9}$/,
+                    message: 'Enter a valid 10-digit mobile number',
+                  },
                 }}
-                placeholder="मोबाईल नंबर"
-                label="Mobile Number (मोबाईल नंबर)*"
+                placeholder="मोबाईल क्रमांक"
+                label="Mobile Number"
+                maxLength={10}
                 fontFamily={
                   isMarathiLanguage
                     ? fontFamily.devanagariRegular
@@ -340,6 +400,7 @@ const CropDamageForm = ({navigation, route}) => {
               />
               <CustomInput
                 control={control}
+                trigger={trigger}
                 name="AADHAAR_NO"
                 keyboardType="numeric"
                 rules={{
@@ -352,9 +413,14 @@ const CropDamageForm = ({navigation, route}) => {
                     value: 12,
                     message: 'Aadhar Number must be 12 digit',
                   },
+                  pattern: {
+                    value: /^\d{12}$/,
+                    message: 'Enter a valid 12-digit Aadhaar number',
+                  },
                 }}
                 placeholder="आधार क्रमांक"
-                label="Aadhar Number (आधार क्रमांक)*"
+                label="Aadhaar Number"
+                maxLength={12}
                 fontFamily={
                   isMarathiLanguage
                     ? fontFamily.devanagariRegular
@@ -363,112 +429,119 @@ const CropDamageForm = ({navigation, route}) => {
               />
               <CustomSelect
                 control={control}
-                name="CROPTYPE"
+                trigger={trigger}
+                name="CROP_TYPE"
                 displayName="key"
                 selectOptions={cropType ?? []}
                 rules={{
                   required: 'Crop Type is required',
                 }}
-                placeholder="पीक प्रकार निवडा"
-                label="Crop Type (पीक प्रकार)*"
+                placeholder="नुकसानीचा प्रकार निवडा"
+                label="Crop Type"
               />
+              {Number(CROP_TYPE?.id) === 2 && (
+                <CustomEngToMarathiInput
+                  control={control}
+                  trigger={trigger}
+                  name="CROP_NAME"
+                  setValue={setValue}
+                  rules={{
+                    required: 'Crop Name is required',
+                  }}
+                  placeholder="पिकाचे नाव प्रविष्ट करा"
+                  label="Crop Name"
+                  maxLength={100}
+                  fontFamily={fontFamily.devanagariRegular}
+                />
+              )}
+              {Number(CROP_TYPE?.id) === 3 && (
+                <>
+                  <CustomMultiSelect
+                    placeholder="प्राण्याचे नाव"
+                    label="Wild Animal(Select one or multiple)"
+                    displayName="key"
+                    value="id"
+                    selectOptions={animalArray ?? []}
+                    selectedValue={selectedAnimal}
+                    state={handleMultiSelectError?.animal}
+                    onPress={() =>
+                      setHandleMultiSelectError({
+                        ...handleMultiSelectError,
+                        animal: !handleMultiSelectError.animal,
+                      })
+                    }
+                    onSelect={ele =>
+                      setSelectedAnimal(
+                        prev =>
+                          prev.some(item => item.id === ele.id)
+                            ? prev.filter(item => item.id !== ele.id) // Remove if exists
+                            : [...prev, ele], // Add if not exists
+                      )
+                    }
+                    fontFamily={
+                      isMarathiLanguage
+                        ? fontFamily.devanagariRegular
+                        : fontFamily.latoRegular
+                    }
+                  />
+                  <CustomMultiSelect
+                    placeholder="फळाचे नाव"
+                    label="Fruit Name(Select one or multiple)"
+                    displayName="key"
+                    value="id"
+                    selectOptions={fruitArray ?? []}
+                    selectedValue={selectedFruit}
+                    state={handleMultiSelectError?.fruit}
+                    onPress={() =>
+                      setHandleMultiSelectError({
+                        ...handleMultiSelectError,
+                        fruit: !handleMultiSelectError.fruit,
+                      })
+                    }
+                    onSelect={ele =>
+                      setSelectedFruit(
+                        prev =>
+                          prev.some(item => item.id === ele.id)
+                            ? prev.filter(item => item.id !== ele.id) // Remove if exists
+                            : [...prev, ele], // Add if not exists
+                      )
+                    }
+                    fontFamily={
+                      isMarathiLanguage
+                        ? fontFamily.devanagariRegular
+                        : fontFamily.latoRegular
+                    }
+                  />
+                </>
+              )}
               <CustomEngToMarathiInput
                 control={control}
-                name="CROP_NAME"
-                setValue={setValue}
-                rules={{
-                  required: 'Crop Name is required',
-                }}
-                placeholder="पिकाचे नाव प्रविष्ट करा"
-                label="Crop Name (पिकाचे नाव)*"
-                fontFamily={
-                  isMarathiLanguage
-                    ? fontFamily.devanagariRegular
-                    : fontFamily.latoRegular
-                }
-              />
-              <CustomMultiSelect
-                placeholder="प्राण्याचे नाव"
-                label="Wild Animal (प्राण्याचे नाव)*"
-                displayName="key"
-                value="id"
-                selectOptions={animalArray ?? []}
-                selectedValue={selectedAnimal}
-                state={handleMultiSelectError?.animal}
-                onPress={() =>
-                  setHandleMultiSelectError({
-                    ...handleMultiSelectError,
-                    animal: !handleMultiSelectError.animal,
-                  })
-                }
-                onSelect={(ele, index) =>
-                  setSelectedAnimal(
-                    selectedAnimal?.find((elem, ind) => ele?.id === elem?.id)
-                      ? selectedAnimal?.filter((item, ind) => index !== ind)
-                      : [...selectedAnimal, ele],
-                  )
-                }
-                fontFamily={
-                  isMarathiLanguage
-                    ? fontFamily.devanagariRegular
-                    : fontFamily.latoRegular
-                }
-              />
-              <CustomMultiSelect
-                placeholder="फळाचे नाव"
-                label="Fruit Name (फळाचे नाव)*"
-                displayName="key"
-                value="id"
-                selectOptions={fruitArray ?? []}
-                selectedValue={selectedFruit}
-                state={handleMultiSelectError?.fruit}
-                onPress={() =>
-                  setHandleMultiSelectError({
-                    ...handleMultiSelectError,
-                    fruit: !handleMultiSelectError.fruit,
-                  })
-                }
-                onSelect={(ele, index) =>
-                  setSelectedFruit(
-                    selectedFruit?.find((elem, ind) => ele?.id === elem?.id)
-                      ? selectedFruit?.filter((item, ind) => index !== ind)
-                      : [...selectedFruit, ele],
-                  )
-                }
-                fontFamily={
-                  isMarathiLanguage
-                    ? fontFamily.devanagariRegular
-                    : fontFamily.latoRegular
-                }
-              />
-              <CustomEngToMarathiInput
-                control={control}
+                trigger={trigger}
                 name="CROP_FARMER"
                 setValue={setValue}
                 rules={{
                   required: 'Former Name is required',
                 }}
                 placeholder="शेतकऱ्याचे नाव"
-                label="Name of the farmer (शेतकऱ्याचे नाव)*"
-                fontFamily={
-                  isMarathiLanguage
-                    ? fontFamily.devanagariRegular
-                    : fontFamily.latoRegular
-                }
+                label="Name of the farmer"
+                maxLength={100}
+                fontFamily={fontFamily.devanagariRegular}
               />
               <CustomSelect
                 control={control}
+                trigger={trigger}
                 name="CMBWING"
                 displayName="WING_NAME"
                 selectOptions={wingList?.RESULT_DATA ?? []}
                 rules={{
-                  required: 'Wing is required',
+                  required: 'Forest Wing is required',
                 }}
                 placeholder="विंग निवडा"
-                label="Wing(विंग)*"
+                label="Forest Wing(विंग)"
               />
               <CustomSelect
                 control={control}
+                trigger={trigger}
                 name="CMBDISTRICT"
                 displayName="DISTRICT_NAME"
                 selectOptions={districtList?.RESULT_DATA ?? []}
@@ -476,10 +549,11 @@ const CropDamageForm = ({navigation, route}) => {
                   required: 'District is required',
                 }}
                 placeholder="जिल्हा निवडा"
-                label="District(जिल्हा)*"
+                label="District"
               />
               <CustomSelect
                 control={control}
+                trigger={trigger}
                 name="CMBTALUKA"
                 displayName="TALUKA_NAME"
                 selectOptions={talukaList?.RESULT_DATA ?? []}
@@ -487,62 +561,70 @@ const CropDamageForm = ({navigation, route}) => {
                   required: 'Taluka is required',
                 }}
                 placeholder="तालुका निवडा"
-                label="Taluka(तालुका)*"
+                label="Taluka"
               />
               <CustomSelect
                 control={control}
+                trigger={trigger}
                 name="CMDROFFICE"
                 displayName="OF_NAME"
                 selectOptions={officeList?.RESULT_DATA ?? []}
                 rules={{
                   required: 'Range is required',
                 }}
-                placeholder="श्रेणी निवडा"
-                label="Range(श्रेणी)*"
+                placeholder="वनपरिक्षेत्र निवडा"
+                label="Range(वनपरिक्षेत्र)"
               />
+              {/* {[undefined, null, '']?.includes(VILLAGETXT) && ( */}
               <CustomSelect
                 control={control}
+                trigger={trigger}
                 name="CMBVILLAGE"
                 displayName="VILLAGE_NAME"
                 selectOptions={villageList?.RESULT_DATA ?? []}
                 // rules={{
-                //   required: 'Village is required',
+                //   required: CMBVILLAGE ? false : 'Village is required',
                 // }}
                 placeholder="गाव निवडा"
-                label="Village(गाव)* If Village not exist then enter village name
-  (गाव अस्तित्वात नसल्यास गावाचे नाव टाका)"
+                label="Village(If Village not exist then enter village name)"
               />
+              {/* )} */}
+              {/* {[undefined, null, '']?.includes(CMBVILLAGE) && ( */}
               <CustomInput
                 control={control}
+                trigger={trigger}
                 name="VILLAGETXT"
-                rules={{
-                  required: 'Village is required',
-                }}
+                // rules={{
+                //   required: ![undefined, null, '']?.includes(CMBVILLAGE)
+                //     ? false
+                //     : 'Village is required',
+                // }}
                 placeholder="गाव निवडा"
-                label="Village (गाव)*"
+                label="Village Name"
+                maxLength={50}
                 fontFamily={
                   isMarathiLanguage
                     ? fontFamily.devanagariRegular
                     : fontFamily.latoRegular
                 }
               />
+              {/* )} */}
               <CustomEngToMarathiInput
                 control={control}
+                trigger={trigger}
                 name="ADDRESS"
                 setValue={setValue}
                 rules={{
                   required: 'Address is required',
                 }}
                 placeholder="पत्ता प्रविष्ट करा"
-                label="Address (पत्ता)*"
-                fontFamily={
-                  isMarathiLanguage
-                    ? fontFamily.devanagariRegular
-                    : fontFamily.latoRegular
-                }
+                label="Address"
+                maxLength={250}
+                fontFamily={fontFamily.devanagariRegular}
               />
               <CustomDatePicker
                 control={control}
+                trigger={trigger}
                 name="FINCIDENT_DATE"
                 modalState={dateStates?.date}
                 openModal={() => setDateStates(prev => ({...prev, date: true}))}
@@ -553,7 +635,7 @@ const CropDamageForm = ({navigation, route}) => {
                   required: 'Incident Date is required',
                 }}
                 placeholder="घटनेची तारीख dd/mm/yyyy मधील तारीख"
-                label="Incident Date (घटनेची तारीख)*"
+                label="Incident Date"
                 fontFamily={
                   isMarathiLanguage
                     ? fontFamily.devanagariRegular
@@ -585,41 +667,66 @@ const CropDamageForm = ({navigation, route}) => {
               </View>
               <CustomInput
                 control={control}
+                trigger={trigger}
                 name="BANK_NAME"
                 rules={{
                   required: 'Bank Name is required',
                 }}
                 placeholder="बँकेचे नाव"
-                label="Bank Name (बँकेचे नाव)*(Only English Alphabets)*"
+                label="Bank Name(Only English Alphabets)"
+                maxLength={20}
               />
               <CustomEngToMarathiInput
                 control={control}
+                trigger={trigger}
                 name="BANKHOLDER_NAME"
                 setValue={setValue}
                 rules={{
                   required: 'Bank Holder Name is required',
                 }}
                 placeholder="खातेधारकाचे नाव"
-                label="Account Holder Name (खातेधारकाचे नाव)*"
+                label="Account Holder Name"
+                maxLength={100}
+                fontFamily={fontFamily.devanagariRegular}
               />
               <CustomInput
                 control={control}
+                trigger={trigger}
                 keyboardType="numeric"
                 name="ACCOUNT_NO"
                 rules={{
                   required: 'Account Number is required',
+                  pattern: {
+                    value: /^\d{9,18}$/,
+                    message: 'Enter a valid account number',
+                  },
                 }}
+                minLength={9}
+                maxLength={18}
                 placeholder="खाते क्रमांक"
-                label="Account Number (खाते क्रमांक)*"
+                label="Account Number"
               />
               <CustomInput
                 control={control}
+                trigger={trigger}
                 name="IFSC_CODE"
                 rules={{
                   required: 'IFSC Code is required',
+                  pattern: {
+                    value: /^[A-Z]{4}0[A-Z0-9]{6}$/,
+                    message: 'Invalid IFSC Code format',
+                  },
+                  minLength: {
+                    value: 11,
+                    message: 'IFSC Code must be 11 characters',
+                  },
+                  maxLength: {
+                    value: 11,
+                    message: 'IFSC Code must be 11 characters',
+                  },
                 }}
                 placeholder="IFSC कोड"
-                label="IFSC Code (IFSC कोड)*"
+                label="IFSC Code"
               />
             </View>
             {/*======Documents Required======*/}
@@ -646,44 +753,48 @@ const CropDamageForm = ({navigation, route}) => {
               </View>
               <CustomFileUpload
                 control={control}
+                trigger={trigger}
                 setValue={setValue}
                 fileName={BANKPASSBOOK_COPY?.name}
                 name="BANKPASSBOOK_COPY"
-                label="Bank Passbook Copy (बँक पासबुक कॉपी)*"
-                note="Choose Valid .pdf File"
+                label="Bank Passbook Copy (बँक पासबुक कॉपी)"
+                note="Choose Valid .pdf file with a maximum size of 20MB."
                 rules={{
                   required: 'Passbook Copy is required',
                 }}
               />
               <CustomFileUpload
                 control={control}
+                trigger={trigger}
                 setValue={setValue}
                 fileName={AADHAAR_COPY?.name}
                 name="AADHAAR_COPY"
-                label="Aadhar Copy (आधार कॉपी)*"
-                note="Choose Valid .pdf File"
+                label="Aadhar Copy (आधार कॉपी)"
+                note="Choose Valid .pdf file with a maximum size of 20MB."
                 rules={{
                   required: 'Aadhar Copy is required',
                 }}
               />
               <CustomFileUpload
                 control={control}
+                trigger={trigger}
                 setValue={setValue}
                 fileName={NOC_COPY?.name}
                 name="NOC_COPY"
-                label="NOC Copy (एनओसी कॉपी)*"
-                note="Choose Valid .pdf File"
+                label="NOC Copy (एनओसी कॉपी)"
+                note="Choose Valid .pdf file with a maximum size of 20MB."
                 rules={{
                   required: 'NOC Copy is required',
                 }}
               />
               <CustomFileUpload
                 control={control}
+                trigger={trigger}
                 setValue={setValue}
                 fileName={SATBARACOPY?.name}
                 name="SATBARACOPY"
-                label="7/12 Copy (7/12 कॉपी)*"
-                note="Choose Valid .pdf File"
+                label="7/12 Copy (7/12 कॉपी)"
+                note="Choose Valid .pdf file with a maximum size of 20MB."
                 rules={{
                   required: '7/12 Copy is required',
                 }}
@@ -696,6 +807,7 @@ const CropDamageForm = ({navigation, route}) => {
               ]}>
               <CustomInput
                 control={control}
+                trigger={trigger}
                 name="captcha"
                 keyboardType="numeric"
                 rules={{
@@ -707,7 +819,7 @@ const CropDamageForm = ({navigation, route}) => {
                   },
                 }}
                 placeholder="कॅप्चा प्रविष्ट करा"
-                label="Captcha (कॅप्चा)*"
+                label="Captcha (कॅप्चा)"
               />
               <View style={formStyle.captchaWrapper}>
                 <View style={formStyle.captcha}>

@@ -139,8 +139,6 @@ export const communication = {
           },
         },
       );
-      console.log('app result', result?.data);
-
       return result?.data;
     } catch (error) {
       console.log(error?.message);

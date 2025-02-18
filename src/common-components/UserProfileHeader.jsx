@@ -1,30 +1,50 @@
 import {View, Text, StyleSheet, Pressable, Image} from 'react-native';
-import React from 'react';
+import React, {useState} from 'react';
 import images from '../constants/images';
 import fontSize from '../constants/fontSize';
 import colors from '../constants/colors';
 import fontFamily from '../constants/fontFamily';
 import {storage} from '../store/mmkvInstance';
+import LogOutBox from '../screens/auth/profile/LogOutBox';
 
-const UserProfileHeader = () => {
+const UserProfileHeader = ({navigation}) => {
   const mobileNumber = storage.getNumber('MOBILE_NO')?.toString();
+  const [logOutState, setLogOutState] = useState(false);
 
+  const logout = () => {
+    navigation.navigate('unAuthScreens');
+    setLogOutState(false);
+  };
   return (
-    <View style={userProfileStyle.profileWrapper}>
-      <View style={userProfileStyle.userDetailWrapper}>
-        <Text style={userProfileStyle.name}>{`Welcome`}</Text>
-        <Text style={userProfileStyle.mobile}>{`${mobileNumber
-          ?.split('')[6]
-          .padStart('7', '*')}${mobileNumber?.substring('7')}`}</Text>
+    <>
+      <View style={userProfileStyle.profileWrapper}>
+        <View style={userProfileStyle.userDetailWrapper}>
+          <Text style={userProfileStyle.name}>{`Welcome`}</Text>
+          <Text style={userProfileStyle.mobile}>{`${mobileNumber
+            ?.split('')[6]
+            .padStart('7', '*')}${mobileNumber?.substring('7')}`}</Text>
+        </View>
+        <Pressable
+          style={userProfileStyle.userIconWrapper}
+          onPress={() => setLogOutState(!logOutState)}>
+          <Image
+            source={images.userIcon}
+            style={userProfileStyle.userIcon}
+            resizeMode="stretch"
+          />
+        </Pressable>
       </View>
-      <Pressable style={userProfileStyle.userIconWrapper}>
-        <Image
-          source={images.userIcon}
-          style={userProfileStyle.userIcon}
-          resizeMode="stretch"
+      {logOutState && (
+        <LogOutBox
+          onCancel={() => setLogOutState(!logOutState)}
+          onLogout={logout}
+          title="Log Out?"
+          content="Are you sure you want to log out? You'll need to login again to use the app."
+          cancelBtnText="Cancel"
+          yesBtnText="Log out"
         />
-      </Pressable>
-    </View>
+      )}
+    </>
   );
 };
 
@@ -55,7 +75,7 @@ const userProfileStyle = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 2,
+    // elevation: 2,
   },
   userIcon: {
     width: '100%',

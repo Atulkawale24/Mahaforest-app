@@ -17,7 +17,7 @@ const CustomDatePicker = ({
   modalState,
   closeModal,
   dateTextStyle,
-  fontFamily="Lato-Regular",
+  fontFamily = 'Lato-Regular',
   placeholderShown = false,
   minimumDate,
   mode = 'date',
@@ -25,6 +25,7 @@ const CustomDatePicker = ({
   disabled = false,
   label,
   style = {},
+  trigger,
 }) => {
   return (
     <Controller
@@ -47,6 +48,7 @@ const CustomDatePicker = ({
                   {color: disabled ? colors.grey : colors.black},
                 ]}>
                 {label}
+                {rules && <Text style={{color: 'red'}}>*</Text>}
               </Text>
             )}
             <Pressable
@@ -105,6 +107,7 @@ const CustomDatePicker = ({
               onConfirm={selectedDate => {
                 closeModal();
                 onChange(selectedDate);
+                trigger(name);
               }}
               onCancel={() => {
                 closeModal();

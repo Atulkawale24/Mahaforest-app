@@ -29,7 +29,12 @@ import {storage} from '../../../../store/mmkvInstance';
 import {injuryTypes} from '../../../../utilities/injuryTypes';
 import {ageArray} from '../../../../utilities/ageArray';
 import {maritalStatus} from '../../../../utilities/maritalStatus';
-import {nomineeType} from '../../../../utilities/nomineeType';
+import {
+  nomineeType,
+  nomineeTypeForFemaleMarried,
+  nomineeTypeForMaleAndFemaleMarried,
+  nomineeTypeForMaleAndFemaleUnmarried,
+} from '../../../../utilities/nomineeType';
 import {incidentTime} from '../../../../utilities/incidentTime';
 import {incidentDuration} from '../../../../utilities/incidentDuration';
 import Loader from '../../../../common-components/Loader';
@@ -51,7 +56,8 @@ const HumanDeath = ({navigation, route}) => {
   const [reloadCaptcha, setReloadCaptcha] = useState(false);
   const [districtId, setDistrictId] = useState(null);
   const [officeId, setOfficeId] = useState(null);
-  const {control, handleSubmit, setValue, watch} = useForm();
+  const {control, handleSubmit, setValue, watch, trigger, setError} = useForm();
+  const [filteredNominee, setFilteredNominee] = useState();
 
   //get captcha value
   useEffect(() => {
@@ -71,21 +77,61 @@ const HumanDeath = ({navigation, route}) => {
   const CMDROFFICE = watch('CMDROFFICE');
   const CMBVILLAGE = watch('CMBVILLAGE');
   const NOMINEE_TYPE = watch('NOMINEE_TYPE');
+  const VILLAGETXT = watch('VILLAGETXT');
+  const INJURY_TYPE = watch('INJURY_TYPE');
+  const MARITAL_STATUS = watch('MARITAL_STATUS');
+
+  useEffect(() => {
+    if (
+      ['male', 'female']?.includes(GENDER?.value?.toLowerCase()) &&
+      MARITAL_STATUS?.value?.toLowerCase() === 'unmarried'
+    ) {
+      setFilteredNominee(nomineeTypeForMaleAndFemaleUnmarried);
+    } else if (
+      ['female']?.includes(GENDER?.value?.toLowerCase()) &&
+      MARITAL_STATUS?.value?.toLowerCase() !== 'unmarried'
+    ) {
+      setFilteredNominee(nomineeTypeForFemaleMarried);
+    } else {
+      setFilteredNominee(nomineeTypeForMaleAndFemaleMarried);
+    }
+  }, [GENDER, MARITAL_STATUS]);
+
+  useEffect(() => {
+    if (Number(INJURY_TYPE?.id) !== 1) {
+      setValue('NOMINEE_TYPE', '');
+      setValue('NOMINEE_NAME', '');
+      setValue('NOMINEE_RELATION', '');
+    }
+  }, [INJURY_TYPE]);
+
+  useEffect(() => {
+    if (CMBWING) {
+      setValue('CMBDISTRICT', '');
+      setValue('CMBTALUKA', '');
+      setValue('CMDROFFICE', '');
+      setValue('CMBVILLAGE', '');
+    }
+  }, [CMBWING]);
 
   useEffect(() => {
     if (CMBDISTRICT) {
+      setValue('CMBTALUKA', '');
+      setValue('CMDROFFICE', '');
+      setValue('CMBVILLAGE', '');
       setDistrictId(CMBDISTRICT?.DISTRICT_ID);
     }
   }, [CMBDISTRICT]);
 
   useEffect(() => {
     if (CMDROFFICE) {
+      setValue('CMBVILLAGE', '');
       setOfficeId(CMDROFFICE?.OF_ID);
     }
   }, [CMDROFFICE]);
 
   useEffect(() => {
-    if (NOMINEE_TYPE) {
+    if (Number(NOMINEE_TYPE?.id) !== 5) {
       setValue('NOMINEE_RELATION', NOMINEE_TYPE);
     }
   }, [NOMINEE_TYPE]);
@@ -173,7 +219,21 @@ const HumanDeath = ({navigation, route}) => {
           text1: `${data?.RESULT_MESSAGE}`,
         });
         navigation.navigate('home');
+      } else if (Number(data?.RESULT_CODE) === 2) {
+        // const serverErrors = data.RESULT_DATA;
+        // // Loop through server errors and assign them to form fields
+        // Object.keys(serverErrors).forEach(field => {
+        //   setError(field, {
+        //     type: 'server',
+        //     message: serverErrors[field], // Display server validation message
+        //   });
+        // });
+        Toast.show({
+          type: 'error',
+          text1: `${data?.RESULT_MESSAGE}`,
+        });
       } else {
+        navigation.navigate('home');
         Toast.show({
           type: 'error',
           text1: `${data?.RESULT_MESSAGE}`,
@@ -183,6 +243,13 @@ const HumanDeath = ({navigation, route}) => {
   });
   const submitForm = data => {
     try {
+      if (!CMBVILLAGE?.VILLAGE_ID && !VILLAGETXT) {
+        Toast.show({
+          type: 'error',
+          text1: 'Village Name is required',
+        });
+        return;
+      }
       const date = `${
         new Date(data?.INJURED_DATE)?.getDate() < 10
           ? `0${new Date(data?.INJURED_DATE)?.getDate()}`
@@ -206,9 +273,11 @@ const HumanDeath = ({navigation, route}) => {
         formData.append('INJURED_AGE', data?.INJURED_AGE);
         formData.append('MARITAL_STATUS', data?.MARITAL_STATUS?.value);
         formData.append('ADDRESS', data?.ADDRESS); //marathi
-        formData.append('NOMINEE_TYPE', data?.NOMINEE_TYPE?.id);
-        formData.append('NOMINEE_NAME', data?.NOMINEE_NAME); //marathi
-        formData.append('NOMINEE_RELATION', data?.NOMINEE_RELATION?.type);
+        if (Number(data?.INJURY_TYPE?.id) === 1) {
+          formData.append('NOMINEE_TYPE', data?.NOMINEE_TYPE?.id);
+          formData.append('NOMINEE_NAME', data?.NOMINEE_NAME); //marathi
+          formData.append('NOMINEE_RELATION', data?.NOMINEE_RELATION?.type);
+        }
         formData.append('CMBWING', data?.CMBWING?.WING_ID);
         formData.append('CMBDISTRICT', data?.CMBDISTRICT?.DISTRICT_ID);
         formData.append('CMBTALUKA', data?.CMBTALUKA?.TALUKA_ID);
@@ -223,11 +292,10 @@ const HumanDeath = ({navigation, route}) => {
         formData.append('IFSC_CODE', data?.IFSC_CODE);
         formData.append('BANKPASSBOOK_COPY', BANKPASSBOOK_COPY);
         formData.append('AADHAAR_COPY', AADHAAR_COPY);
-        if (data?.CMBVILLAGE?.VILLAGE_ID) {
-          formData.append('CMBVILLAGE', data?.CMBVILLAGE?.VILLAGE_ID);
-        }
         if (data?.VILLAGETXT) {
           formData.append('VILLAGETXT', data?.VILLAGETXT);
+        } else {
+          formData.append('CMBVILLAGE', data?.CMBVILLAGE?.VILLAGE_ID);
         }
       }
       mutate(formData);
@@ -250,7 +318,7 @@ const HumanDeath = ({navigation, route}) => {
         />
         <View style={[globalStyle.screenWrapper, {flex: 0.97}]}>
           <FormCard serviceType={serviceType} />
-          <View style={formStyle.languageChangerWrapper}>
+          {/* <View style={formStyle.languageChangerWrapper}>
             <Text style={formStyle.languageText}>
               मराठी मध्ये लिहीण्याकरीता (अ) यावर क्लिक करा
             </Text>
@@ -263,7 +331,7 @@ const HumanDeath = ({navigation, route}) => {
                 अ?
               </Text>
             </Pressable>
-          </View>
+          </View> */}
           <ScrollView showsVerticalScrollIndicator={false}>
             <View
               style={[
@@ -288,21 +356,20 @@ const HumanDeath = ({navigation, route}) => {
               </View>
               <CustomEngToMarathiInput
                 control={control}
+                trigger={trigger}
                 name="APPLICANT_NAME"
                 setValue={setValue}
                 rules={{
                   required: 'Applicant Name is required',
                 }}
                 placeholder="अर्जदाराचे पूर्ण नाव"
-                label="Applicant Full Name (अर्जदाराचे पूर्ण नाव)*"
-                fontFamily={
-                  isMarathiLanguage
-                    ? fontFamily.devanagariRegular
-                    : fontFamily.latoRegular
-                }
+                label="Applicant Full Name"
+                maxLength={100}
+                fontFamily={fontFamily.devanagariRegular}
               />
               <CustomInput
                 control={control}
+                trigger={trigger}
                 name="MOBILE_NO"
                 keyboardType="numeric"
                 rules={{
@@ -315,9 +382,14 @@ const HumanDeath = ({navigation, route}) => {
                     value: 10,
                     message: 'Mobile Number must be 10 digit',
                   },
+                  pattern: {
+                    value: /^[6789]\d{9}$/,
+                    message: 'Enter a valid 10-digit mobile number',
+                  },
                 }}
-                placeholder="मोबाईल नंबर"
-                label="Mobile Number (मोबाईल नंबर)*"
+                maxLength={10}
+                placeholder="मोबाईल क्रमांक"
+                label="Mobile Number"
                 fontFamily={
                   isMarathiLanguage
                     ? fontFamily.devanagariRegular
@@ -326,6 +398,7 @@ const HumanDeath = ({navigation, route}) => {
               />
               <CustomInput
                 control={control}
+                trigger={trigger}
                 name="AADHAAR_NO"
                 keyboardType="numeric"
                 rules={{
@@ -338,9 +411,14 @@ const HumanDeath = ({navigation, route}) => {
                     value: 12,
                     message: 'Aadhar Number must be 12 digit',
                   },
+                  pattern: {
+                    value: /^\d{12}$/,
+                    message: 'Enter a valid 12-digit Aadhaar number',
+                  },
                 }}
                 placeholder="आधार क्रमांक"
-                label="Aadhar Number (आधार क्रमांक)*"
+                label="Aadhar Number"
+                maxLength={12}
                 fontFamily={
                   isMarathiLanguage
                     ? fontFamily.devanagariRegular
@@ -349,6 +427,7 @@ const HumanDeath = ({navigation, route}) => {
               />
               <CustomSelect
                 control={control}
+                trigger={trigger}
                 name="INJURY_TYPE"
                 displayName="type"
                 selectOptions={injuryTypes ?? []}
@@ -356,25 +435,24 @@ const HumanDeath = ({navigation, route}) => {
                   required: 'Injury Type is required',
                 }}
                 placeholder="दुखापतीचा प्रकार निवडा"
-                label="Type of Injury(दुखापतीचा प्रकार)*"
+                label="Type of Injury"
               />
               <CustomEngToMarathiInput
                 control={control}
+                trigger={trigger}
                 name="INJURED_NAME"
                 setValue={setValue}
                 rules={{
                   required: 'Injured Person Name is required',
                 }}
                 placeholder="जखमी/मृत व्यक्तीचे नाव"
-                label="Name of injured/ dead person (जखमी/मृत व्यक्तीचे नाव)*"
-                fontFamily={
-                  isMarathiLanguage
-                    ? fontFamily.devanagariRegular
-                    : fontFamily.latoRegular
-                }
+                label="Name of injured/ dead person"
+                maxLength={100}
+                fontFamily={fontFamily.devanagariRegular}
               />
               <CustomRadio
                 control={control}
+                trigger={trigger}
                 setValue={setValue}
                 selectedValue={GENDER?.value}
                 displayName="key"
@@ -382,7 +460,7 @@ const HumanDeath = ({navigation, route}) => {
                 rules={{
                   required: 'Gender is required',
                 }}
-                label="Gender (लिंग)*"
+                label="Gender (लिंग)"
                 options={genderArray ?? []}
                 fontFamily={
                   isMarathiLanguage
@@ -392,16 +470,18 @@ const HumanDeath = ({navigation, route}) => {
               />
               <CustomSelect
                 control={control}
+                trigger={trigger}
                 name="INJURED_AGE"
                 selectOptions={ageArray ?? []}
                 rules={{
                   required: 'Age is required',
                 }}
                 placeholder="वय निवडा"
-                label="Age (वय)*"
+                label="Age"
               />
               <CustomSelect
                 control={control}
+                trigger={trigger}
                 name="MARITAL_STATUS"
                 displayName="key"
                 selectOptions={maritalStatus ?? []}
@@ -409,61 +489,78 @@ const HumanDeath = ({navigation, route}) => {
                   required: 'Marital Status is required',
                 }}
                 placeholder="वैवाहिक स्थिती निवडा"
-                label=" Marital Status (वैवाहिक स्थिती)*"
+                label=" Marital Status"
               />
               <CustomEngToMarathiInput
                 control={control}
+                trigger={trigger}
                 name="ADDRESS"
                 setValue={setValue}
                 rules={{
                   required: 'Address is required',
                 }}
                 placeholder="पत्ता प्रविष्ट करा"
-                label="Address (पत्ता)*"
-                fontFamily={
-                  isMarathiLanguage
-                    ? fontFamily.devanagariRegular
-                    : fontFamily.latoRegular
-                }
+                label="Address"
+                maxLength={250}
+                fontFamily={fontFamily.devanagariRegular}
               />
-              <CustomSelect
-                control={control}
-                name="NOMINEE_TYPE"
-                displayName="type"
-                selectOptions={nomineeType ?? []}
-                rules={{
-                  required: 'Nominee Type is required',
-                }}
-                placeholder="नामनि प्रकार"
-                label=" Nominee Type (नामनि प्रकार)*"
-              />
-              <CustomEngToMarathiInput
-                control={control}
-                name="NOMINEE_NAME"
-                setValue={setValue}
-                rules={{
-                  required: 'Nominee Name is required',
-                }}
-                placeholder="नामनि नाव"
-                label="Nominee Name (नामनि नाव)*"
-                fontFamily={
-                  isMarathiLanguage
-                    ? fontFamily.devanagariRegular
-                    : fontFamily.latoRegular
-                }
-              />
-              <CustomSelect
-                control={control}
-                name="NOMINEE_RELATION"
-                displayName="type"
-                selectOptions={nomineeType ?? []}
-                // rules={{
-                //   required: 'Nominee Name is required',
-                // }}
-                placeholder="नामनि संबंध"
-                label="Nominee Relation (नामनि संबंध)*"
-                disabled={true}
-              />
+              {Number(INJURY_TYPE?.id) === 1 && (
+                <>
+                  <CustomSelect
+                    control={control}
+                    trigger={trigger}
+                    name="NOMINEE_TYPE"
+                    displayName="type"
+                    selectOptions={filteredNominee ?? []}
+                    rules={{
+                      required: 'Nominee Type is required',
+                    }}
+                    placeholder="Select Nominee"
+                    label="Nominee Type"
+                  />
+                  <CustomEngToMarathiInput
+                    control={control}
+                    trigger={trigger}
+                    name="NOMINEE_NAME"
+                    setValue={setValue}
+                    rules={{
+                      required: 'Nominee Name is required',
+                    }}
+                    placeholder="वारसदाराचे नाव"
+                    label="Nominee Name"
+                    maxLength={100}
+                    fontFamily={fontFamily.devanagariRegular}
+                  />
+                  {Number(NOMINEE_TYPE?.id) !== 5 ? (
+                    <CustomSelect
+                      control={control}
+                      name="NOMINEE_RELATION"
+                      displayName="type"
+                      selectOptions={nomineeType ?? []}
+                      // rules={{
+                      //   required: 'Nominee Name is required',
+                      // }}
+                      placeholder="वारसदाराशी संबंध"
+                      label="Nominee Relation"
+                      disabled={true}
+                    />
+                  ) : (
+                    <CustomEngToMarathiInput
+                      control={control}
+                      trigger={trigger}
+                      name="NOMINEE_RELATION"
+                      setValue={setValue}
+                      rules={{
+                        required: 'Nominee Relation is required',
+                      }}
+                      placeholder="नामनि संबंध"
+                      label="Nominee Relation"
+                      maxLength={100}
+                      fontFamily={fontFamily.devanagariRegular}
+                    />
+                  )}
+                </>
+              )}
               {/* <CustomInput
                 control={control}
                 name="NOMINEE_RELATION"
@@ -482,6 +579,7 @@ const HumanDeath = ({navigation, route}) => {
               /> */}
               <CustomSelect
                 control={control}
+                trigger={trigger}
                 name="CMBWING"
                 displayName="WING_NAME"
                 selectOptions={wingList?.RESULT_DATA ?? []}
@@ -489,10 +587,11 @@ const HumanDeath = ({navigation, route}) => {
                   required: 'Wing is required',
                 }}
                 placeholder="विंग निवडा"
-                label="Wing(विंग)*"
+                label="Forest Wing"
               />
               <CustomSelect
                 control={control}
+                trigger={trigger}
                 name="CMBDISTRICT"
                 displayName="DISTRICT_NAME"
                 selectOptions={districtList?.RESULT_DATA ?? []}
@@ -500,10 +599,11 @@ const HumanDeath = ({navigation, route}) => {
                   required: 'District is required',
                 }}
                 placeholder="जिल्हा निवडा"
-                label="District(जिल्हा)*"
+                label="District"
               />
               <CustomSelect
                 control={control}
+                trigger={trigger}
                 name="CMBTALUKA"
                 displayName="TALUKA_NAME"
                 selectOptions={talukaList?.RESULT_DATA ?? []}
@@ -511,47 +611,55 @@ const HumanDeath = ({navigation, route}) => {
                   required: 'Taluka is required',
                 }}
                 placeholder="तालुका निवडा"
-                label="Taluka(तालुका)*"
+                label="Taluka"
               />
               <CustomSelect
                 control={control}
+                trigger={trigger}
                 name="CMDROFFICE"
                 displayName="OF_NAME"
                 selectOptions={officeList?.RESULT_DATA ?? []}
                 rules={{
                   required: 'Range is required',
                 }}
-                placeholder="श्रेणी निवडा"
-                label="Range(श्रेणी)*"
+                placeholder="वनपरिक्षेत्र निवडा"
+                label="Range(वनपरिक्षेत्र)"
               />
+              {/* {[undefined, null, '']?.includes(VILLAGETXT) && ( */}
               <CustomSelect
                 control={control}
+                trigger={trigger}
                 name="CMBVILLAGE"
                 displayName="VILLAGE_NAME"
                 selectOptions={villageList?.RESULT_DATA ?? []}
                 // rules={{
-                //   required: 'Village is required',
+                //   required: VILLAGETXT ? false : 'Village is required',
                 // }}
                 placeholder="गाव निवडा"
-                label="Village(गाव)* If Village not exist then enter village name
+                label="Village(गाव) If Village not exist then enter village name
 (गाव अस्तित्वात नसल्यास गावाचे नाव टाका)"
               />
-              {[undefined, null, '']?.includes(CMBVILLAGE) && (
-                <CustomInput
-                  control={control}
-                  name="VILLAGETXT"
-                  rules={{
-                    required: 'Village is required',
-                  }}
-                  placeholder="गाव निवडा"
-                  label="Village (गाव)*"
-                  fontFamily={
-                    isMarathiLanguage
-                      ? fontFamily.devanagariRegular
-                      : fontFamily.latoRegular
-                  }
-                />
-              )}
+              {/* )} */}
+              {/* {[undefined, null, '']?.includes(c) && ( */}
+              <CustomInput
+                control={control}
+                trigger={trigger}
+                name="VILLAGETXT"
+                // rules={{
+                //   required: ![undefined, null, '']?.includes(VILLAGETXT)
+                //     ? false
+                //     : 'Village is required',
+                // }}
+                placeholder="गाव निवडा"
+                label="Village Name"
+                maxLength={50}
+                fontFamily={
+                  isMarathiLanguage
+                    ? fontFamily.devanagariRegular
+                    : fontFamily.latoRegular
+                }
+              />
+              {/* )} */}
             </View>
             {/*======Incident Details======*/}
             <View
@@ -577,6 +685,7 @@ const HumanDeath = ({navigation, route}) => {
               </View>
               <CustomDatePicker
                 control={control}
+                trigger={trigger}
                 name="INJURED_DATE"
                 modalState={dateStates?.date}
                 openModal={() => setDateStates(prev => ({...prev, date: true}))}
@@ -587,7 +696,7 @@ const HumanDeath = ({navigation, route}) => {
                   required: 'Incident Date is required',
                 }}
                 placeholder="घटनेची तारीख dd/mm/yyyy मधील तारीख"
-                label="Incident Date (घटनेची तारीख)*"
+                label="Incident Date"
                 fontFamily={
                   isMarathiLanguage
                     ? fontFamily.devanagariRegular
@@ -596,38 +705,38 @@ const HumanDeath = ({navigation, route}) => {
               />
               <CustomSelect
                 control={control}
+                trigger={trigger}
                 name="INJURED_TIME"
                 selectOptions={incidentTime ?? []}
                 rules={{
                   required: 'Incident Time is required',
                 }}
                 placeholder="घटनेची वेळ"
-                label="Incident Time (घटनेची वेळ)*"
+                label="Incident Time"
               />
               <CustomSelect
                 control={control}
+                trigger={trigger}
                 name="INJURED_TIMEBTWN"
                 selectOptions={incidentDuration ?? []}
                 rules={{
                   required: 'Duration is required',
                 }}
                 placeholder="घटनेचा कालावधी निवडा"
-                label="Incident Duration(घटनेचा कालावधी)*"
+                label="Incident Duration"
               />
               <CustomEngToMarathiInput
                 control={control}
+                trigger={trigger}
                 name="INCIDENT_PLACE"
                 setValue={setValue}
                 rules={{
                   required: 'Incident Place is required',
                 }}
                 placeholder="घटनेचे ठिकाण प्रविष्ट करा"
-                label="Incident Place (घटनेचे ठिकाण)*"
-                fontFamily={
-                  isMarathiLanguage
-                    ? fontFamily.devanagariRegular
-                    : fontFamily.latoRegular
-                }
+                label="Incident Place"
+                maxLength={50}
+                fontFamily={fontFamily.devanagariRegular}
               />
             </View>
             {/*======Bank Details======*/}
@@ -654,41 +763,66 @@ const HumanDeath = ({navigation, route}) => {
               </View>
               <CustomInput
                 control={control}
+                trigger={trigger}
                 name="BANK_NAME"
                 rules={{
                   required: 'Bank Name is required',
                 }}
                 placeholder="बँकेचे नाव"
-                label="Bank Name (बँकेचे नाव)*(Only English Alphabets)*"
+                maxLength={20}
+                label="Bank Name(Only English Alphabets)"
               />
               <CustomEngToMarathiInput
                 control={control}
+                trigger={trigger}
                 name="BANKHOLDER_NAME"
                 setValue={setValue}
                 rules={{
                   required: 'Bank Holder Name is required',
                 }}
                 placeholder="खातेधारकाचे नाव"
-                label="Account Holder Name (खातेधारकाचे नाव)*"
+                label="Account Holder Name"
+                maxLength={100}
+                fontFamily={fontFamily.devanagariRegular}
               />
               <CustomInput
                 control={control}
+                trigger={trigger}
                 keyboardType="numeric"
                 name="ACCOUNT_NO"
                 rules={{
                   required: 'Account Number is required',
+                  pattern: {
+                    value: /^\d{9,18}$/,
+                    message: 'Enter a valid account number',
+                  },
                 }}
+                minLength={9}
+                maxLength={18}
                 placeholder="खाते क्रमांक"
-                label="Account Number (खाते क्रमांक)*"
+                label="Account Number"
               />
               <CustomInput
                 control={control}
+                trigger={trigger}
                 name="IFSC_CODE"
                 rules={{
                   required: 'IFSC Code is required',
+                  pattern: {
+                    value: /^[A-Z]{4}0[A-Z0-9]{6}$/,
+                    message: 'Invalid IFSC Code format',
+                  },
+                  minLength: {
+                    value: 11,
+                    message: 'IFSC Code must be 11 characters',
+                  },
+                  maxLength: {
+                    value: 11,
+                    message: 'IFSC Code must be 11 characters',
+                  },
                 }}
                 placeholder="IFSC कोड"
-                label="IFSC Code (IFSC कोड)*"
+                label="IFSC Code"
               />
             </View>
             {/*======Documents Required======*/}
@@ -715,22 +849,24 @@ const HumanDeath = ({navigation, route}) => {
               </View>
               <CustomFileUpload
                 control={control}
+                trigger={trigger}
                 setValue={setValue}
                 fileName={BANKPASSBOOK_COPY?.name}
                 name="BANKPASSBOOK_COPY"
-                label="Bank Passbook Copy (बँक पासबुक कॉपी)*"
-                note="Choose Valid .pdf File"
+                label="Bank Passbook Copy (बँक पासबुक कॉपी)"
+                note="Choose Valid .pdf file with a maximum size of 20MB."
                 rules={{
                   required: 'Passbook Copy is required',
                 }}
               />
               <CustomFileUpload
                 control={control}
+                trigger={trigger}
                 setValue={setValue}
                 fileName={AADHAAR_COPY?.name}
                 name="AADHAAR_COPY"
-                label="Aadhar Copy (आधार कॉपी)*"
-                note="Choose Valid .pdf File"
+                label="Aadhar Copy (आधार कॉपी)"
+                note="Choose Valid .pdf file with a maximum size of 20MB."
                 rules={{
                   required: 'Aadhar Copy is required',
                 }}
@@ -743,6 +879,7 @@ const HumanDeath = ({navigation, route}) => {
               ]}>
               <CustomInput
                 control={control}
+                trigger={trigger}
                 name="captcha"
                 keyboardType="numeric"
                 rules={{
@@ -754,7 +891,7 @@ const HumanDeath = ({navigation, route}) => {
                   },
                 }}
                 placeholder="कॅप्चा प्रविष्ट करा"
-                label="Captcha (कॅप्चा)*"
+                label="Captcha"
               />
               <View style={formStyle.captchaWrapper}>
                 <View style={formStyle.captcha}>

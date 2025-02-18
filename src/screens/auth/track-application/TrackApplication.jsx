@@ -1,4 +1,11 @@
-import {View, Text, ScrollView, Pressable} from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  BackHandler,
+  Dimensions,
+} from 'react-native';
 import React from 'react';
 import {globalStyle} from '../../../styles/globalStyle';
 import TopHeader from '../../../common-components/TopHeader';
@@ -12,18 +19,43 @@ import {dateMonthYearConverter} from '../../../helper/dateMonthYearConverter';
 import fontFamily from '../../../constants/fontFamily';
 import fontSize from '../../../constants/fontSize';
 import Loader from '../../../common-components/Loader';
-
+import {storage} from '../../../store/mmkvInstance';
+import {useFocusEffect, useIsFocused} from '@react-navigation/native';
+const {height} = Dimensions.get('window');
 const TrackApplication = ({navigation}) => {
+  const REGISTERED_ID = storage.getNumber('REGISTER_ID');
+  const isFocused = useIsFocused();
+
   // Fetch wing list
   const {
     data: applicationList,
     isPending,
     error,
   } = useQuery({
-    queryKey: ['application-list', TOKEN_KEY],
+    queryKey: ['application-list', isFocused],
     queryFn: () =>
-      communication.getApplicationList({TOKENKEY: TOKEN_KEY, REGISTER_ID: 26}),
+      communication.getApplicationList({
+        TOKENKEY: TOKEN_KEY,
+        REGISTER_ID: REGISTERED_ID,
+      }),
   });
+
+  // Handle back button press ONLY on the Home screen
+  useFocusEffect(
+    React.useCallback(() => {
+      const backAction = () => {
+        navigation.navigate('home-screen');
+        // return true; // Prevent default back button behavior
+      };
+
+      const backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        backAction,
+      );
+
+      return () => backHandler.remove(); // Cleanup the event listener
+    }, []),
+  );
 
   return (
     <>
@@ -55,23 +87,24 @@ const TrackApplication = ({navigation}) => {
                   <Text
                     style={[
                       trackApplicationStyle.headerText,
-                      trackApplicationStyle.date,
-                    ]}>
-                    Date
-                  </Text>
-                  <Text
-                    style={[
-                      trackApplicationStyle.headerText,
                       trackApplicationStyle.applicationId,
                     ]}>
-                    ApplicationId
+                    Application ID
                   </Text>
                   <Text
                     style={[
                       trackApplicationStyle.headerText,
                       trackApplicationStyle.applicationFor,
+                      {marginLeft: 30},
                     ]}>
                     Applicant Name
+                  </Text>
+                  <Text
+                    style={[
+                      trackApplicationStyle.headerText,
+                      trackApplicationStyle.date,
+                    ]}>
+                    Date
                   </Text>
                   {/* <Text
                   style={[
@@ -87,18 +120,18 @@ const TrackApplication = ({navigation}) => {
                   ]}>
                   Status
                 </Text> */}
-                  <Text
+                  {/* <Text
                     style={[
                       trackApplicationStyle.headerText,
                       trackApplicationStyle.action,
                     ]}>
                     Action
-                  </Text>
+                  </Text> */}
                 </View>
                 <ScrollView
                   showsVerticalScrollIndicator={true}
                   nestedScrollEnabled={true}
-                  style={{maxHeight: 600}} // Limit vertical height to enable scrolling
+                  // style={{maxHeight: height / 1.75}} // Limit vertical height to enable scrolling
                 >
                   {applicationList?.RESULT_DATA?.length > 0 ? (
                     <>
@@ -115,6 +148,37 @@ const TrackApplication = ({navigation}) => {
                                 ]}>
                                 {index + 1}
                               </Text>
+
+                              {/* <View
+                    style={[
+                      trackApplicationStyle.date,
+                      trackApplicationStyle.applicationId,
+                    ]}> */}
+                              <Pressable
+                                onPress={() =>
+                                  navigation.navigate('track-my-application', {
+                                    application,
+                                  })
+                                }>
+                                <Text
+                                  style={[
+                                    // trackApplicationStyle.date,
+                                    trackApplicationStyle.dataApplicationId,
+                                  ]}>
+                                  {/* {application?.APPLICATION_NO?.split(
+                                    '/',
+                                  )?.pop()} */}
+                                  {application?.APPLICATION_NO}
+                                </Text>
+                              </Pressable>
+                              <Text
+                                style={[
+                                  trackApplicationStyle.dataText,
+                                  trackApplicationStyle.applicationFor,
+                                  {color: colors.orange, marginLeft: 30},
+                                ]}>
+                                {application?.APPLICANT_NAME ?? '--'}
+                              </Text>
                               <Text
                                 style={[
                                   trackApplicationStyle.dataText,
@@ -124,30 +188,6 @@ const TrackApplication = ({navigation}) => {
                                   dateMonthYearConverter(
                                     application?.APPLICATION_DATE,
                                   )}
-                              </Text>
-                              {/* <View
-                    style={[
-                      trackApplicationStyle.date,
-                      trackApplicationStyle.applicationId,
-                    ]}> */}
-                              <Pressable>
-                                <Text
-                                  style={[
-                                    trackApplicationStyle.date,
-                                    trackApplicationStyle.dataApplicationId,
-                                  ]}>
-                                  {application?.APPLICATION_NO?.split(
-                                    '/',
-                                  )?.pop()}
-                                </Text>
-                              </Pressable>
-                              <Text
-                                style={[
-                                  trackApplicationStyle.dataText,
-                                  trackApplicationStyle.applicationFor,
-                                  {color: colors.orange},
-                                ]}>
-                                {application?.APPLICANT_NAME ?? '--'}
                               </Text>
                               {/* </View> */}
                               {/* <Text
@@ -174,7 +214,7 @@ const TrackApplication = ({navigation}) => {
                       Submitted
                     </Text>
                   </View> */}
-                              <Text
+                              {/* <Text
                                 style={[
                                   trackApplicationStyle.dataText,
                                   trackApplicationStyle.action,
@@ -195,7 +235,7 @@ const TrackApplication = ({navigation}) => {
                                     color={colors.grey}
                                   />
                                 </Pressable>
-                              </Text>
+                              </Text> */}
                             </View>
                           );
                         },

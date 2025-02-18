@@ -15,6 +15,9 @@ const CustomInput = ({
   editable = true,
   fontFamily = 'Lato-Regular',
   numberOfLines = 1,
+  trigger,
+  maxLength,
+  minLength,
 }) => {
   const [focusedInput, setFocusedInput] = useState('');
 
@@ -33,18 +36,25 @@ const CustomInput = ({
                   {color: editable ? colors.black : colors.grey},
                 ]}>
                 {label}
+                {rules && <Text style={{color: 'red'}}>*</Text>}
               </Text>
             )}
             <TextInput
-              control={control}
-              name={name}
-              rules={rules}
+              // control={control}
+              // name={name}
+              // rules={rules}
               onChangeText={onChange}
               onFocus={() => setFocusedInput(name)}
-              onBlur={() => setFocusedInput('')}
+              onBlur={() => {
+                setFocusedInput('');
+                trigger(name);
+              }}
               placeholder={placeholder}
               keyboardType={keyboardType}
               editable={editable}
+              maxLength={maxLength}
+              minLength={minLength}
+              multiline
               style={[
                 customInputStyle.inputBox,
                 {

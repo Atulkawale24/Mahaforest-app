@@ -18,7 +18,8 @@ const MyApplicationCard = ({application}) => {
         </Pressable> */}
       </View>
       <Text style={myApplicationCardStyle.applicationId}>
-        Application Id: {application?.APPLICATION_NO?.split('/')?.pop()}
+        {/* Application Id: {application?.APPLICATION_NO?.split('/')?.pop()} */}
+        Application ID: {application?.APPLICATION_NO}
       </Text>
       {/* <Text style={myApplicationCardStyle.applicationTypeEng}>
         COMPENSATION TO BE SANCTIONED FOR CATTLE KILL CAUSE BY WILDLIFE
@@ -37,7 +38,9 @@ const myApplicationCardStyle = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 15,
     backgroundColor: colors.white,
-    elevation: 2,
+    // elevation: 2,
+    borderWidth: 1,
+    borderColor: 'lightgrey',
     borderRadius: 10,
   },
   dateWrapper: {

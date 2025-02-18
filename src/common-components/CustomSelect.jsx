@@ -30,6 +30,8 @@ const CustomSelect = ({
   noDataAvailableMessage = '',
   label,
   boxType,
+  trigger,
+  setValue,
 }) => {
   return (
     <Controller
@@ -57,12 +59,19 @@ const CustomSelect = ({
               <SelectDropdown
                 disabled={disabled}
                 data={selectOptions}
-                onSelect={onChange}
+                onBlur={() => trigger(name)} // Trigger validation on blur
+                onSelect={selectedItem => {
+                  onChange(selectedItem);
+                  trigger(name); // Trigger validation on select
+                }}
                 renderButton={(selectedItem, isOpened) => {
                   return (
                     <Pressable
                       style={styles.rightIconWrapper}
-                      onPress={onPress}>
+                      onPress={() => {
+                        trigger(name); // Trigger validation on press
+                        if (onPress) onPress();
+                      }}>
                       {label && (
                         <Text
                           style={[
@@ -70,6 +79,7 @@ const CustomSelect = ({
                             {color: disabled ? colors.grey : colors.black},
                           ]}>
                           {label}
+                          {rules && <Text style={{color: 'red'}}>*</Text>}
                         </Text>
                       )}
                       <View

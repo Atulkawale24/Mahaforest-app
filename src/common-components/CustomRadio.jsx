@@ -16,6 +16,7 @@ const CustomRadio = ({
   editable = true,
   options,
   fontFamily = 'Lato-Regular',
+  trigger,
 }) => {
   return (
     <Controller
@@ -32,6 +33,7 @@ const CustomRadio = ({
                   {color: editable ? colors.black : colors.grey},
                 ]}>
                 {label}
+                {rules && <Text style={{color: 'red'}}>*</Text>}
               </Text>
             )}
             {options?.length > 0 && (
@@ -39,7 +41,10 @@ const CustomRadio = ({
                 {options?.map((ele, index) => {
                   return (
                     <Pressable
-                      onPress={() => setValue(`${name}`, ele)}
+                      onPress={() => {
+                        setValue(`${name}`, ele);
+                        trigger(name);
+                      }}
                       style={radioStyle.radioButtonWrapper}
                       key={index}>
                       <View style={radioStyle.outerCircle}>

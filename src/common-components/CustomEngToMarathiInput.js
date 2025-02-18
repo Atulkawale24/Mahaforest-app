@@ -4,6 +4,7 @@ import {Controller} from 'react-hook-form';
 import colors from '../constants/colors';
 import {customInputStyle} from './CustomInput';
 import {engToMarathiConverter} from '../helper/engToMarathiConverter';
+import axios from 'axios';
 
 const CustomEngToMarathiInput = ({
   control,
@@ -13,9 +14,11 @@ const CustomEngToMarathiInput = ({
   placeholder,
   keyboardType = 'default',
   editable = true,
-  fontFamily = 'Lato-Regular',
+  fontFamily = 'NotoSansDevanagari-Regular',
   numberOfLines = 1,
   setValue,
+  trigger,
+  maxLength,
 }) => {
   const [focusedInput, setFocusedInput] = useState('');
   const [inputText, setInputText] = useState('');
@@ -41,6 +44,34 @@ const CustomEngToMarathiInput = ({
   //     return () => clearTimeout(timer); // Cleanup
   //   }, [inputText]);
 
+  const translateString = async text => {
+    try {
+      if (debounceTimer) clearTimeout(debounceTimer);
+
+      const timer = setTimeout(async () => {
+        // Mark this function as async
+        try {
+          if (![undefined, null, '']?.includes(text)) {
+            const response = await axios.get(
+              `https://inputtools.google.com/request?text=${text}&itc=mr-t-i0-und`,
+            );
+            const result = response.data[1][0][1][0]; // Extract Marathi text
+            // setConvertedText(result);
+            setValue(name, result); // Use the extracted result
+          } else {
+            setValue(name, ''); // Use the extracted result
+          }
+        } catch (error) {
+          console.error('Translation error:', error);
+        }
+      }, 1500);
+
+      setDebounceTimer(timer);
+    } catch (error) {
+      console.error('Debounce error:', error);
+    }
+  };
+
   return (
     <Controller
       control={control}
@@ -56,6 +87,7 @@ const CustomEngToMarathiInput = ({
                   {color: editable ? colors.black : colors.grey},
                 ]}>
                 {label}
+                {rules && <Text style={{color: 'red'}}>*</Text>}
               </Text>
             )}
             <TextInput
@@ -63,23 +95,28 @@ const CustomEngToMarathiInput = ({
               name={name}
               rules={rules}
               value={value}
+              multiline
               onChangeText={text => {
                 onChange(text); // Update form field immediately
-
-                if (debounceTimer) clearTimeout(debounceTimer);
-                const timer = setTimeout(() => {
-                  const translatedText = engToMarathiConverter(
-                    text.toLowerCase(),
-                  );
-                  setValue(name, translatedText); // Update translated text
-                }, 1500);
-                setDebounceTimer(timer);
+                translateString(text);
+                // if (debounceTimer) clearTimeout(debounceTimer);
+                // const timer = setTimeout(() => {
+                //   const translatedText = engToMarathiConverter(
+                //     text.toLowerCase(),
+                //   );
+                //   setValue(name, translatedText); // Update translated text
+                // }, 1500);
+                // setDebounceTimer(timer);
               }}
               onFocus={() => setFocusedInput(true)}
-              onBlur={() => setFocusedInput(false)}
+              onBlur={() => {
+                setFocusedInput(false);
+                trigger(name);
+              }}
               placeholder={placeholder}
               keyboardType={keyboardType}
               editable={editable}
+              maxLength={maxLength}
               style={[
                 customInputStyle.inputBox,
                 {

@@ -1,4 +1,19 @@
-export const nomineeType = [
+
+export const nomineeTypeForMaleAndFemaleUnmarried = [
+  {
+    id: 4,
+    type: 'आई/वडील',
+  },
+  {
+    id: 12,
+    type: 'बहिण/भाऊ',
+  },
+  {
+    id: 5,
+    type: 'इतर',
+  },
+];
+export const nomineeTypeForMaleAndFemaleMarried = [
   {
     id: 1,
     type: 'पत्नी आणि अज्ञान अपत्य',
@@ -19,36 +34,26 @@ export const nomineeType = [
     id: 5,
     type: 'इतर',
   },
+];
+export const nomineeTypeForFemaleMarried = [
   {
     id: 6,
     type: 'पती आणि अज्ञान अपत्य',
   },
   {
-    id: 7,
+    id: 2,
     type: 'मुलं',
   },
   {
-    id: 8,
+    id: 3,
     type: 'अज्ञान अपत्ये/अतिरिक्त जिल्हाधिकारी',
   },
   {
-    id: 9,
+    id: 4,
     type: 'आई/वडील',
   },
   {
-    id: 10,
-    type: 'इतर',
-  },
-  {
-    id: 11,
-    type: 'आई/वडील',
-  },
-  {
-    id: 12,
-    type: 'बहिण/भाऊ',
-  },
-  {
-    id: 13,
+    id: 5,
     type: 'इतर',
   },
 ];
