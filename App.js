@@ -20,6 +20,7 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 import RootNavigator from './src/Navigators/RootNavigator';
 import Toast from 'react-native-toast-message';
+import SplashScreen from 'react-native-splash-screen';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -27,6 +28,10 @@ function App() {
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
+
+  useEffect(() => {
+    SplashScreen.hide();
+  }, []);
 
   return (
     <SafeAreaView style={{flex: 1}}>
